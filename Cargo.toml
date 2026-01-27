@@ -2,6 +2,11 @@
 name = "udmf"
 version = "0.1.0"
 edition = "2024"
+description = "Rust bindings for the OpenHarmony Unified Data Management Framework (UDMF)"
+license = "Apache-2.0"
+readme = "Readme.md"
+keywords = ["OpenHarmony", "UDMF", "data-management"]
+repository = "https://github.com/openharmony-rs/udmf"
 
 [dependencies]
 udmf-sys = { version = "0.1.3", features = ["api-14"] }
