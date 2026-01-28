@@ -32,112 +32,96 @@ impl TypeDescriptor {
     }
 
     pub fn get_description(&self) -> String {
+        self.get_description_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    /// Get the description as a CStr.
+    pub fn get_description_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_Utd.
-        let c_str = unsafe { OH_Utd_GetDescription(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_Utd_GetDescription(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UTD and is valid for the lifetime of self.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UTD.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn get_reference_url(&self) -> String {
-        // SAFETY: self.inner is a valid pointer to OH_Utd.
-        let c_str = unsafe { OH_Utd_GetReferenceUrl(self.inner) };
-        if c_str.is_null() {
-            return String::new();
-        }
-        // SAFETY: c_str is a valid C string returned by UTD.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
+        self.get_reference_url_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
     }
 
-    pub fn get_mime_types(&self) -> Vec<String> {
+    /// Get the reference URL as a CStr.
+    pub fn get_reference_url_cstr(&self) -> Option<&CStr> {
+        // SAFETY: self.inner is a valid pointer to OH_Utd.
+        let c_ptr = unsafe { OH_Utd_GetReferenceUrl(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UTD and is valid for the lifetime of self.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
+        }
+    }
+
+    pub fn get_mime_types(&self) -> impl Iterator<Item = String> + '_ {
+        self.get_mime_types_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+    }
+
+    /// Get the MIME types associated with this type as a list of CStr.
+    pub fn get_mime_types_cstr(&self) -> impl Iterator<Item = &CStr> + '_ {
         let mut count: u32 = 0;
         // SAFETY: self.inner is a valid pointer. count will be initialized by the FFI call.
         let list_ptr = unsafe { OH_Utd_GetMimeTypes(self.inner, &mut count) };
-        Self::parse_list_unowned(list_ptr, count, Self::map_string)
+        UtdListIter::new(list_ptr, count)
     }
 
-    pub fn get_filename_extensions(&self) -> Vec<String> {
+    pub fn get_filename_extensions(&self) -> impl Iterator<Item = String> + '_ {
+        self.get_filename_extensions_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+    }
+
+    /// Get the filename extensions associated with this type as a list of CStr.
+    pub fn get_filename_extensions_cstr(&self) -> impl Iterator<Item = &CStr> + '_ {
         let mut count: u32 = 0;
         // SAFETY: self.inner is a valid pointer. count will be initialized by the FFI call.
         let list_ptr = unsafe { OH_Utd_GetFilenameExtensions(self.inner, &mut count) };
-        Self::parse_list_unowned(list_ptr, count, Self::map_string)
+        UtdListIter::new(list_ptr, count)
     }
 
-    pub fn get_belonging_to_types(&self) -> Vec<UniformDataType> {
+    pub fn get_belonging_to_types(&self) -> impl Iterator<Item = UniformDataType> + '_ {
         let mut count: u32 = 0;
         // SAFETY: self.inner is a valid pointer. count will be initialized by the FFI call.
         let list_ptr = unsafe { OH_Utd_GetBelongingToTypes(self.inner, &mut count) };
-        Self::parse_list_unowned(list_ptr, count, Self::map_type)
+        UtdListIter::new(list_ptr, count).map(UniformDataType::from)
     }
 
-    pub fn get_types_by_filename_extension(extension: &str) -> Vec<UniformDataType> {
-        if let Ok(c_ext) = CString::new(extension) {
-            let mut count: u32 = 0;
+    pub fn get_types_by_filename_extension(
+        extension: &str,
+    ) -> impl Iterator<Item = UniformDataType> {
+        let mut count: u32 = 0;
+        let list_ptr = if let Ok(c_ext) = CString::new(extension) {
             // SAFETY: c_ext is a valid C string. count will be initialized by the FFI call.
-            let list_ptr =
-                unsafe { OH_Utd_GetTypesByFilenameExtension(c_ext.as_ptr(), &mut count) };
-            return Self::parse_list_owned(list_ptr, count, Self::map_type);
-        }
-        Vec::new()
+            unsafe { OH_Utd_GetTypesByFilenameExtension(c_ext.as_ptr(), &mut count) }
+        } else {
+            std::ptr::null_mut()
+        };
+        OwnedUtdListIter::new(list_ptr, count).map(|s| UniformDataType::from(s.as_c_str()))
     }
 
-    pub fn get_types_by_mime_type(mime_type: &str) -> Vec<UniformDataType> {
-        if let Ok(c_mime) = CString::new(mime_type) {
-            let mut count: u32 = 0;
+    pub fn get_types_by_mime_type(mime_type: &str) -> impl Iterator<Item = UniformDataType> {
+        let mut count: u32 = 0;
+        let list_ptr = if let Ok(c_mime) = CString::new(mime_type) {
             // SAFETY: c_mime is a valid C string. count will be initialized by the FFI call.
-            let list_ptr = unsafe { OH_Utd_GetTypesByMimeType(c_mime.as_ptr(), &mut count) };
-            return Self::parse_list_owned(list_ptr, count, Self::map_type);
-        }
-        Vec::new()
-    }
-
-    fn parse_list_unowned<T>(
-        list_ptr: *mut *const ::core::ffi::c_char,
-        count: u32,
-        map: impl Fn(&CStr) -> T,
-    ) -> Vec<T> {
-        if list_ptr.is_null() || count == 0 {
-            return Vec::new();
-        }
-
-        let mut result = Vec::with_capacity(count as usize);
-        for i in 0..count {
-            // SAFETY: list_ptr is valid and count is correct from FFI.
-            let s_ptr = unsafe { *list_ptr.add(i as usize) };
-            if !s_ptr.is_null() {
-                // SAFETY: s_ptr is a valid C string.
-                let c_str = unsafe { CStr::from_ptr(s_ptr) };
-                result.push(map(c_str));
-            }
-        }
-        result
-    }
-
-    fn parse_list_owned<T>(
-        list_ptr: *mut *const ::core::ffi::c_char,
-        count: u32,
-        map: impl Fn(&CStr) -> T,
-    ) -> Vec<T> {
-        let result = Self::parse_list_unowned(list_ptr, count, map);
-        if !list_ptr.is_null() {
-            // SAFETY: list_ptr was returned by a function that explicitly says it must be destroyed.
-            unsafe { OH_Utd_DestroyStringList(list_ptr, count) };
-        }
-        result
-    }
-
-    fn map_string(c: &CStr) -> String {
-        c.to_string_lossy().into_owned()
-    }
-
-    fn map_type(c: &CStr) -> UniformDataType {
-        c.into()
+            unsafe { OH_Utd_GetTypesByMimeType(c_mime.as_ptr(), &mut count) }
+        } else {
+            std::ptr::null_mut()
+        };
+        OwnedUtdListIter::new(list_ptr, count).map(|s| UniformDataType::from(s.as_c_str()))
     }
 
     pub fn belongs_to(&self, other_type_id: impl Into<UniformDataType>) -> bool {
@@ -153,6 +137,97 @@ impl Drop for TypeDescriptor {
         if self.owned && !self.inner.is_null() {
             // SAFETY: self.inner is a valid pointer and we own it.
             unsafe { OH_Utd_Destroy(self.inner) };
+        }
+    }
+}
+
+/// An iterator over a list of strings provided by the UDMF framework.
+struct UtdListIter<'a> {
+    list: &'a [*const std::os::raw::c_char],
+    index: usize,
+}
+
+impl<'a> UtdListIter<'a> {
+    fn new(list_ptr: *mut *const std::os::raw::c_char, count: u32) -> Self {
+        if list_ptr.is_null() || count == 0 {
+            return Self {
+                list: &[],
+                index: 0,
+            };
+        }
+        Self {
+            // SAFETY: list_ptr is valid and count is correct from FFI.
+            list: unsafe { std::slice::from_raw_parts(list_ptr, count as usize) },
+            index: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for UtdListIter<'a> {
+    type Item = &'a CStr;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.index < self.list.len() {
+            let ptr = self.list[self.index];
+            self.index += 1;
+            if !ptr.is_null() {
+                // SAFETY: ptr is a valid C string and its lifetime is tied to the parent list.
+                return Some(unsafe { CStr::from_ptr(ptr) });
+            }
+        }
+        None
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.list.len() - self.index;
+        (0, Some(remaining))
+    }
+}
+
+/// An iterator over a list of strings that must be destroyed after use.
+struct OwnedUtdListIter {
+    list_ptr: *mut *const std::os::raw::c_char,
+    count: u32,
+    index: u32,
+}
+
+impl OwnedUtdListIter {
+    fn new(list_ptr: *mut *const std::os::raw::c_char, count: u32) -> Self {
+        Self {
+            list_ptr,
+            count,
+            index: 0,
+        }
+    }
+}
+
+impl Iterator for OwnedUtdListIter {
+    type Item = CString;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.index < self.count {
+            // SAFETY: list_ptr is valid and index is within bounds.
+            let s_ptr = unsafe { *self.list_ptr.add(self.index as usize) };
+            self.index += 1;
+            if !s_ptr.is_null() {
+                // SAFETY: s_ptr is a valid C string.
+                return Some(unsafe { CStr::from_ptr(s_ptr) }.to_owned());
+            }
+        }
+        None
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = (self.count - self.index) as usize;
+        (0, Some(remaining))
+    }
+}
+
+impl Drop for OwnedUtdListIter {
+    fn drop(&mut self) {
+        if !self.list_ptr.is_null() {
+            // SAFETY: list_ptr was returned by a function that explicitly says it must be destroyed.
+            unsafe { OH_Utd_DestroyStringList(self.list_ptr, self.count) };
         }
     }
 }

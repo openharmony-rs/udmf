@@ -18,14 +18,14 @@ fn test_type_descriptor_lists() {
     let utd =
         TypeDescriptor::new(&UniformDataType::PlainText).expect("Failed to create TypeDescriptor");
 
-    let mimes = utd.get_mime_types();
-    assert!(mimes.contains(&"text/plain".to_string()));
+    let mut mimes = utd.get_mime_types();
+    assert!(mimes.any(|x| x == "text/plain"));
 
-    let extensions = utd.get_filename_extensions();
-    assert!(extensions.contains(&".txt".to_string()));
+    let mut extensions = utd.get_filename_extensions();
+    assert!(extensions.any(|x| x == ".txt"));
 
-    let belongs = utd.get_belonging_to_types();
-    assert!(belongs.contains(&UniformDataType::Text));
+    let mut belongs = utd.get_belonging_to_types();
+    assert!(belongs.any(|x| x == UniformDataType::Text));
 }
 
 #[test]
@@ -40,9 +40,9 @@ fn test_type_descriptor_url() {
 
 #[test]
 fn test_type_descriptor_search() {
-    let types = TypeDescriptor::get_types_by_filename_extension(".txt");
-    assert!(types.contains(&UniformDataType::PlainText));
+    let mut types = TypeDescriptor::get_types_by_filename_extension(".txt");
+    assert!(types.any(|x| x == UniformDataType::PlainText));
 
-    let types = TypeDescriptor::get_types_by_mime_type("text/plain");
-    assert!(types.contains(&UniformDataType::PlainText));
+    let mut types = TypeDescriptor::get_types_by_mime_type("text/plain");
+    assert!(types.any(|x| x == UniformDataType::PlainText));
 }
