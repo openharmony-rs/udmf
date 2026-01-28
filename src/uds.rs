@@ -48,40 +48,58 @@ uds_wrapper!(
 );
 impl PlainText {
     pub fn get_content(&self) -> String {
+        self.get_content_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_content_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsPlainText.
-        let c_str = unsafe { OH_UdsPlainText_GetContent(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsPlainText_GetContent(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_content(&mut self, content: &str) -> Result<()> {
         let c_content = CString::new(content).map_err(|_| UdmfError::InvalidParam)?;
-        // SAFETY: self.inner is a valid pointer and c_content is a valid C string.
-        let res = unsafe { OH_UdsPlainText_SetContent(self.inner, c_content.as_ptr()) };
+        self.set_content_cstr(&c_content)
+    }
+
+    pub fn set_content_cstr(&mut self, content: &CStr) -> Result<()> {
+        // SAFETY: self.inner is a valid pointer and content is a valid C string.
+        let res = unsafe { OH_UdsPlainText_SetContent(self.inner, content.as_ptr()) };
         to_result(res)
     }
 
     pub fn get_abstract(&self) -> String {
+        self.get_abstract_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_abstract_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsPlainText.
-        let c_str = unsafe { OH_UdsPlainText_GetAbstract(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsPlainText_GetAbstract(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_abstract(&mut self, abstract_text: &str) -> Result<()> {
         let c_abstract = CString::new(abstract_text).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_abstract_cstr(&c_abstract)
+    }
+
+    pub fn set_abstract_cstr(&mut self, abstract_text: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer and c_abstract is a valid C string.
-        let res = unsafe { OH_UdsPlainText_SetAbstract(self.inner, c_abstract.as_ptr()) };
+        let res = unsafe { OH_UdsPlainText_SetAbstract(self.inner, abstract_text.as_ptr()) };
         to_result(res)
     }
 }
@@ -94,40 +112,58 @@ uds_wrapper!(
 );
 impl Hyperlink {
     pub fn get_url(&self) -> String {
+        self.get_url_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_url_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsHyperlink.
-        let c_str = unsafe { OH_UdsHyperlink_GetUrl(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsHyperlink_GetUrl(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_url(&mut self, url: &str) -> Result<()> {
         let c_url = CString::new(url).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_url_cstr(&c_url)
+    }
+
+    pub fn set_url_cstr(&mut self, url: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer and c_url is a valid C string.
-        let res = unsafe { OH_UdsHyperlink_SetUrl(self.inner, c_url.as_ptr()) };
+        let res = unsafe { OH_UdsHyperlink_SetUrl(self.inner, url.as_ptr()) };
         to_result(res)
     }
 
     pub fn get_description(&self) -> String {
+        self.get_description_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_description_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsHyperlink.
-        let c_str = unsafe { OH_UdsHyperlink_GetDescription(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsHyperlink_GetDescription(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_description(&mut self, description: &str) -> Result<()> {
         let c_desc = CString::new(description).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_description_cstr(&c_desc)
+    }
+
+    pub fn set_description_cstr(&mut self, description: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer and c_desc is a valid C string.
-        let res = unsafe { OH_UdsHyperlink_SetDescription(self.inner, c_desc.as_ptr()) };
+        let res = unsafe { OH_UdsHyperlink_SetDescription(self.inner, description.as_ptr()) };
         to_result(res)
     }
 }
@@ -135,40 +171,58 @@ impl Hyperlink {
 uds_wrapper!(Html, OH_UdsHtml, OH_UdsHtml_Create, OH_UdsHtml_Destroy);
 impl Html {
     pub fn get_content(&self) -> String {
+        self.get_content_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_content_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsHtml.
-        let c_str = unsafe { OH_UdsHtml_GetContent(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsHtml_GetContent(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_content(&mut self, content: &str) -> Result<()> {
         let c_content = CString::new(content).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_content_cstr(&c_content)
+    }
+
+    pub fn set_content_cstr(&mut self, content: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer and c_content is a valid C string.
-        let res = unsafe { OH_UdsHtml_SetContent(self.inner, c_content.as_ptr()) };
+        let res = unsafe { OH_UdsHtml_SetContent(self.inner, content.as_ptr()) };
         to_result(res)
     }
 
     pub fn get_plain_content(&self) -> String {
+        self.get_plain_content_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_plain_content_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsHtml.
-        let c_str = unsafe { OH_UdsHtml_GetPlainContent(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsHtml_GetPlainContent(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_plain_content(&mut self, plain_content: &str) -> Result<()> {
         let c_plain = CString::new(plain_content).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_plain_content_cstr(&c_plain)
+    }
+
+    pub fn set_plain_content_cstr(&mut self, plain_content: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer and c_plain is a valid C string.
-        let res = unsafe { OH_UdsHtml_SetPlainContent(self.inner, c_plain.as_ptr()) };
+        let res = unsafe { OH_UdsHtml_SetPlainContent(self.inner, plain_content.as_ptr()) };
         to_result(res)
     }
 }
@@ -182,40 +236,58 @@ uds_wrapper!(
 // Simplified AppItem implementation, focusing on bundle name and ability name
 impl AppItem {
     pub fn get_bundle_name(&self) -> String {
+        self.get_bundle_name_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_bundle_name_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsAppItem.
-        let c_str = unsafe { OH_UdsAppItem_GetBundleName(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsAppItem_GetBundleName(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_bundle_name(&mut self, name: &str) -> Result<()> {
         let c_name = CString::new(name).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_bundle_name_cstr(&c_name)
+    }
+
+    pub fn set_bundle_name_cstr(&mut self, name: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer and c_name is a valid C string.
-        let res = unsafe { OH_UdsAppItem_SetBundleName(self.inner, c_name.as_ptr()) };
+        let res = unsafe { OH_UdsAppItem_SetBundleName(self.inner, name.as_ptr()) };
         to_result(res)
     }
 
     pub fn get_ability_name(&self) -> String {
+        self.get_ability_name_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_ability_name_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsAppItem.
-        let c_str = unsafe { OH_UdsAppItem_GetAbilityName(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsAppItem_GetAbilityName(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_ability_name(&mut self, name: &str) -> Result<()> {
         let c_name = CString::new(name).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_ability_name_cstr(&c_name)
+    }
+
+    pub fn set_ability_name_cstr(&mut self, name: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer to OH_UdsAppItem, and c_name is a valid C string.
-        let res = unsafe { OH_UdsAppItem_SetAbilityName(self.inner, c_name.as_ptr()) };
+        let res = unsafe { OH_UdsAppItem_SetAbilityName(self.inner, name.as_ptr()) };
         to_result(res)
     }
 }
@@ -228,40 +300,58 @@ uds_wrapper!(
 );
 impl FileUri {
     pub fn get_file_uri(&self) -> String {
+        self.get_file_uri_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_file_uri_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsFileUri.
-        let c_str = unsafe { OH_UdsFileUri_GetFileUri(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsFileUri_GetFileUri(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_file_uri(&mut self, uri: &str) -> Result<()> {
         let c_uri = CString::new(uri).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_file_uri_cstr(&c_uri)
+    }
+
+    pub fn set_file_uri_cstr(&mut self, uri: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer to OH_UdsFileUri, and c_uri is a valid C string.
-        let res = unsafe { OH_UdsFileUri_SetFileUri(self.inner, c_uri.as_ptr()) };
+        let res = unsafe { OH_UdsFileUri_SetFileUri(self.inner, uri.as_ptr()) };
         to_result(res)
     }
 
     pub fn get_file_type(&self) -> String {
+        self.get_file_type_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_file_type_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsFileUri.
-        let c_str = unsafe { OH_UdsFileUri_GetFileType(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsFileUri_GetFileType(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_file_type(&mut self, file_type: &str) -> Result<()> {
         let c_type = CString::new(file_type).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_file_type_cstr(&c_type)
+    }
+
+    pub fn set_file_type_cstr(&mut self, file_type: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer to OH_UdsFileUri, and c_type is a valid C string.
-        let res = unsafe { OH_UdsFileUri_SetFileType(self.inner, c_type.as_ptr()) };
+        let res = unsafe { OH_UdsFileUri_SetFileType(self.inner, file_type.as_ptr()) };
         to_result(res)
     }
 }
@@ -351,78 +441,114 @@ uds_wrapper!(
 );
 impl ContentForm {
     pub fn get_title(&self) -> String {
+        self.get_title_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_title_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsContentForm.
-        let c_str = unsafe { OH_UdsContentForm_GetTitle(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsContentForm_GetTitle(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_title(&mut self, title: &str) -> Result<()> {
         let c_title = CString::new(title).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_title_cstr(&c_title)
+    }
+
+    pub fn set_title_cstr(&mut self, title: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer to OH_UdsContentForm, and c_title is a valid C string.
-        let res = unsafe { OH_UdsContentForm_SetTitle(self.inner, c_title.as_ptr()) };
+        let res = unsafe { OH_UdsContentForm_SetTitle(self.inner, title.as_ptr()) };
         to_result(res)
     }
 
     pub fn get_description(&self) -> String {
+        self.get_description_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_description_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsContentForm.
-        let c_str = unsafe { OH_UdsContentForm_GetDescription(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsContentForm_GetDescription(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_description(&mut self, description: &str) -> Result<()> {
         let c_desc = CString::new(description).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_description_cstr(&c_desc)
+    }
+
+    pub fn set_description_cstr(&mut self, description: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer to OH_UdsContentForm, and c_desc is a valid C string.
-        let res = unsafe { OH_UdsContentForm_SetDescription(self.inner, c_desc.as_ptr()) };
+        let res = unsafe { OH_UdsContentForm_SetDescription(self.inner, description.as_ptr()) };
         to_result(res)
     }
 
     pub fn get_app_name(&self) -> String {
+        self.get_app_name_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_app_name_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsContentForm.
-        let c_str = unsafe { OH_UdsContentForm_GetAppName(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsContentForm_GetAppName(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_app_name(&mut self, name: &str) -> Result<()> {
         let c_name = CString::new(name).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_app_name_cstr(&c_name)
+    }
+
+    pub fn set_app_name_cstr(&mut self, name: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer to OH_UdsContentForm, and c_name is a valid C string.
-        let res = unsafe { OH_UdsContentForm_SetAppName(self.inner, c_name.as_ptr()) };
+        let res = unsafe { OH_UdsContentForm_SetAppName(self.inner, name.as_ptr()) };
         to_result(res)
     }
 
     pub fn get_link_uri(&self) -> String {
+        self.get_link_uri_cstr()
+            .map(|c| c.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    pub fn get_link_uri_cstr(&self) -> Option<&CStr> {
         // SAFETY: self.inner is a valid pointer to OH_UdsContentForm.
-        let c_str = unsafe { OH_UdsContentForm_GetLinkUri(self.inner) };
-        if c_str.is_null() {
-            return String::new();
+        let c_ptr = unsafe { OH_UdsContentForm_GetLinkUri(self.inner) };
+        if c_ptr.is_null() {
+            None
+        } else {
+            // SAFETY: c_ptr is a valid C string returned by UDMF and it is valid as long as self is alive.
+            Some(unsafe { CStr::from_ptr(c_ptr) })
         }
-        // SAFETY: c_str is a valid C string returned by UDMF.
-        unsafe { CStr::from_ptr(c_str) }
-            .to_string_lossy()
-            .into_owned()
     }
 
     pub fn set_link_uri(&mut self, uri: &str) -> Result<()> {
         let c_uri = CString::new(uri).map_err(|_| UdmfError::InvalidParam)?;
+        self.set_link_uri_cstr(&c_uri)
+    }
+
+    pub fn set_link_uri_cstr(&mut self, uri: &CStr) -> Result<()> {
         // SAFETY: self.inner is a valid pointer to OH_UdsContentForm, and c_uri is a valid C string.
-        let res = unsafe { OH_UdsContentForm_SetLinkUri(self.inner, c_uri.as_ptr()) };
+        let res = unsafe { OH_UdsContentForm_SetLinkUri(self.inner, uri.as_ptr()) };
         to_result(res)
     }
 
