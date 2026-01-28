@@ -6,7 +6,7 @@ use std::ptr;
 use udmf_sys::data_management_framework::*;
 
 pub struct UnifiedData {
-    pub(crate) inner: *mut OH_UdmfData,
+    inner: *mut OH_UdmfData,
     owned: bool,
 }
 
@@ -20,12 +20,21 @@ impl UnifiedData {
         Ok(Self { inner, owned: true })
     }
 
-    #[allow(dead_code)]
-    pub(crate) unsafe fn from_ptr(inner: *mut OH_UdmfData) -> Self {
-        Self {
-            inner,
-            owned: false,
-        }
+    /// # Safety
+    ///
+    /// The caller must ensure that `inner` is a valid pointer to an `OH_UdmfData`.
+    pub unsafe fn from_ptr(inner: *mut OH_UdmfData, owned: bool) -> Self {
+        Self { inner, owned }
+    }
+
+    /// Returns the underlying raw pointer to `OH_UdmfData`.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that the pointer is only used while the `UnifiedData`
+    /// object is alive.
+    pub unsafe fn as_ptr(&self) -> *mut OH_UdmfData {
+        self.inner
     }
 
     pub fn add_record(&mut self, record: &UnifiedRecord) -> Result<()> {
@@ -76,7 +85,7 @@ impl UnifiedData {
             if !r_ptr.is_null() {
                 // These records are belonging to the UnifiedData, so they are not owned by the wrapper
                 // SAFETY: r_ptr is a valid pointer to OH_UdmfRecord.
-                records.push(unsafe { UnifiedRecord::from_ptr(r_ptr) });
+                records.push(unsafe { UnifiedRecord::from_ptr(r_ptr, false) });
             }
         }
         records
@@ -107,11 +116,11 @@ impl UnifiedRecord {
         Ok(Self { inner, owned: true })
     }
 
-    pub(crate) unsafe fn from_ptr(inner: *mut OH_UdmfRecord) -> Self {
-        Self {
-            inner,
-            owned: false,
-        }
+    /// # Safety
+    ///
+    /// The caller must ensure that `inner` is a valid pointer to an `OH_UdmfRecord`.
+    pub unsafe fn from_ptr(inner: *mut OH_UdmfRecord, owned: bool) -> Self {
+        Self { inner, owned }
     }
 
     pub fn get_types(&self) -> Vec<crate::UniformDataType> {
