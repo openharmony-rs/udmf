@@ -1,6 +1,6 @@
 [package]
 name = "udmf"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Rust bindings for the OpenHarmony Unified Data Management Framework (UDMF)"
 license = "Apache-2.0"
